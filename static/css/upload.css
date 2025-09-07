@@ -1,0 +1,492 @@
+/* Upload Page Specific Styles */
+
+/* Container Layout */
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Header Styles */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.header-title {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header-subtitle {
+    font-size: 1.2rem;
+    margin: 0;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Progress Bar */
+.progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed .step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.step-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
+}
+
+.progress-step.completed .step-label {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.progress-line {
+    width: 80px;
+    height: 2px;
+    background: #e0e0e0;
+    margin: 0 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Document Type Selection */
+.document-type-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+}
+
+.document-type-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.document-type-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.document-type-option input[type="radio"] {
+    display: none;
+}
+
+.option-content {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-type-option:hover .option-content {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.document-type-option input[type="radio"]:checked + .option-content {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.option-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.option-text h3 {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.option-text p {
+    color: #666;
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Upload Section */
+.upload-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.upload-area {
+    margin-bottom: 1.5rem;
+}
+
+.upload-zone {
+    border: 3px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.upload-zone:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+    transform: translateY(-2px);
+}
+
+.upload-zone.dragover {
+    border-color: #667eea;
+    background: #e8f0ff;
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.upload-zone h3 {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.upload-zone p {
+    color: #666;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.upload-info {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.upload-info p {
+    color: #666;
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+/* File List */
+.file-list {
+    margin-top: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+    color: #667eea;
+}
+
+.file-details h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.file-details p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.file-remove {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.file-remove:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* Upload Progress */
+.upload-progress {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.progress-header h3 {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+#progressText {
+    color: #666;
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Error Messages */
+.error-message {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.error-icon {
+    font-size: 2rem;
+    color: #e53e3e;
+}
+
+.error-content h3 {
+    color: #c53030;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+.error-content p {
+    color: #742a2a;
+    margin: 0 0 1rem 0;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Aptos Display', sans-serif;
+    min-width: 150px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.btn-primary:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Footer */
+.footer {
+    background: #2d3748;
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: auto;
+}
+
+.footer p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .document-type-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .upload-zone {
+        padding: 2rem 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .progress-bar {
+        padding: 1rem;
+    }
+    
+    .progress-line {
+        width: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .upload-zone h3 {
+        font-size: 1.3rem;
+    }
+    
+    .upload-zone p {
+        font-size: 1rem;
+    }
+}
+

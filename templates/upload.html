@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents - Tax Advisor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Aptos+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/upload.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">Tax Advisor Application</h1>
+                <p class="header-subtitle">Upload your documents to get started</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Indicator -->
+            <div class="progress-bar">
+                <div class="progress-step completed">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Upload</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Review</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Calculate</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <span class="step-number">4</span>
+                    <span class="step-label">AI Advisor</span>
+                </div>
+            </div>
+
+            <!-- Document Type Selection -->
+            <div class="document-type-section">
+                <h2 class="section-title">Select Document Type</h2>
+                <div class="document-type-options">
+                    <label class="document-type-option">
+                        <input type="radio" name="documentType" value="salary_slip_single" checked>
+                        <div class="option-content">
+                            <div class="option-icon">📄</div>
+                            <div class="option-text">
+                                <h3>Salary Slip (Single)</h3>
+                                <p>Upload one monthly salary slip</p>
+                            </div>
+                        </div>
+                    </label>
+                    
+                    <label class="document-type-option">
+                        <input type="radio" name="documentType" value="form16">
+                        <div class="option-content">
+                            <div class="option-icon">📋</div>
+                            <div class="option-text">
+                                <h3>Form 16</h3>
+                                <p>Upload annual Form 16 document</p>
+                            </div>
+                        </div>
+                    </label>
+                    
+                    <label class="document-type-option">
+                        <input type="radio" name="documentType" value="salary_slip_multiple">
+                        <div class="option-content">
+                            <div class="option-icon">📚</div>
+                            <div class="option-text">
+                                <h3>Multiple Salary Slips</h3>
+                                <p>Upload up to 4 monthly salary slips</p>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h2 class="section-title">Upload Documents</h2>
+                
+                <!-- Single File Upload -->
+                <div id="singleUpload" class="upload-area">
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📁</div>
+                        <h3>Drag & Drop PDF here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                    </div>
+                    <div class="upload-info">
+                        <p>Supported format: PDF only</p>
+                        <p>Maximum size: 10MB</p>
+                    </div>
+                </div>
+
+                <!-- Multiple File Upload -->
+                <div id="multipleUpload" class="upload-area" style="display: none;">
+                    <div class="upload-zone" id="multipleUploadZone">
+                        <div class="upload-icon">📚</div>
+                        <h3>Drag & Drop Multiple PDFs</h3>
+                        <p>or click to browse (max 4 files)</p>
+                        <input type="file" id="multipleFileInput" accept=".pdf" multiple style="display: none;">
+                    </div>
+                    <div class="file-list" id="fileList"></div>
+                    <div class="upload-info">
+                        <p>Supported format: PDF only</p>
+                        <p>Maximum size per file: 10MB</p>
+                        <p>Maximum files: 4</p>
+                    </div>
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-header">
+                        <h3>Processing Documents...</h3>
+                        <div class="progress-bar-container">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p id="progressText">Extracting data...</p>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-content">
+                        <h3>Upload Failed</h3>
+                        <p id="errorText"></p>
+                        <button class="btn-secondary" onclick="hideError()">Try Again</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn-secondary" onclick="goBack()">Back</button>
+                <button class="btn-primary" id="processButton" onclick="processDocuments()" disabled>
+                    Process Documents
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Tax Advisor Application. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="../static/js/upload.js?v=2.0"></script>
+</body>
+</html>
+

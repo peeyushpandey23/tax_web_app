@@ -1,0 +1,522 @@
+/* Review Form Page Specific Styles */
+
+/* Container Layout */
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Header Styles */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.header-title {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header-subtitle {
+    font-size: 1.2rem;
+    margin: 0;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Progress Bar */
+.progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3rem;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed .step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.step-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
+}
+
+.progress-step.completed .step-label {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.progress-line {
+    width: 80px;
+    height: 2px;
+    background: #e0e0e0;
+    margin: 0 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Processing Summary */
+.processing-summary {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+}
+
+.summary-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.summary-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.summary-value {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.summary-notes {
+    background: #e8f0ff;
+    border: 1px solid #cce7ff;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.summary-notes h4 {
+    margin: 0 0 0.5rem 0;
+    color: #0056b3;
+    font-size: 1rem;
+}
+
+.summary-notes ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #0056b3;
+}
+
+.summary-notes li {
+    margin-bottom: 0.25rem;
+}
+
+/* Data Form Section */
+.data-form-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.form-description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.financial-form {
+    max-width: 100%;
+}
+
+.form-group {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.group-title {
+    font-family: 'Aptos Display', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-field label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.currency-symbol {
+    position: absolute;
+    left: 12px;
+    color: #666;
+    font-weight: 600;
+    font-size: 1.1rem;
+    z-index: 1;
+}
+
+.form-field input[type="number"] {
+    width: 100%;
+    padding: 12px 12px 12px 35px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Aptos Display', sans-serif;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-field input[type="number"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-field input[type="number"]:read-only {
+    background: #f8f9fa;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.form-field input[type="number"].error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.form-field input[type="number"].success {
+    border-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.field-help {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Validation Messages */
+.validation-messages {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.validation-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.validation-icon {
+    font-size: 1.5rem;
+    color: #e53e3e;
+}
+
+.validation-header h3 {
+    margin: 0;
+    color: #c53030;
+    font-size: 1.2rem;
+}
+
+.validation-list {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #742a2a;
+}
+
+.validation-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Aptos Display', sans-serif;
+    min-width: 180px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.btn-primary:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Footer */
+.footer {
+    background: #2d3748;
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: auto;
+}
+
+.footer p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Success/Error States */
+.form-field.success input {
+    border-color: #28a745;
+}
+
+.form-field.success .field-help {
+    color: #28a745;
+}
+
+.form-field.error input {
+    border-color: #dc3545;
+}
+
+.form-field.error .field-help {
+    color: #dc3545;
+}
+
+/* Loading States */
+.form-field.loading input {
+    background: #f8f9fa;
+    color: #666;
+}
+
+.form-field.loading::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e9ecef;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 1rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .progress-bar {
+        padding: 1rem;
+    }
+    
+    .progress-line {
+        width: 40px;
+    }
+    
+    .summary-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .group-title {
+        font-size: 1.2rem;
+    }
+    
+    .form-group {
+        padding: 1rem;
+    }
+    
+    .form-field input[type="number"] {
+        font-size: 0.95rem;
+        padding: 10px 10px 10px 30px;
+    }
+    
+    .currency-symbol {
+        font-size: 1rem;
+        left: 10px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .header,
+    .progress-bar,
+    .form-actions,
+    .footer {
+        display: none;
+    }
+    
+    .main-content {
+        padding: 0;
+    }
+    
+    .data-form-section {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .form-group {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+}
+

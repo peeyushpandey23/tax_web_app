@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Financial Data - Tax Advisor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Aptos+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/review_form.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">Tax Advisor Application</h1>
+                <p class="header-subtitle">Review and Edit Financial Data</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Indicator -->
+            <div class="progress-bar">
+                <div class="progress-step completed">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Upload</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step completed">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Review</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Calculate</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <span class="step-number">4</span>
+                    <span class="step-label">AI Advisor</span>
+                </div>
+            </div>
+
+            <!-- Processing Summary -->
+            <div id="processingSummary" class="processing-summary" style="display: none;">
+                <h2 class="section-title">Processing Summary</h2>
+                <div class="summary-content">
+                    <div class="summary-item">
+                        <span class="summary-label">Files Processed:</span>
+                        <span class="summary-value" id="filesProcessed">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Document Type:</span>
+                        <span class="summary-value" id="documentType">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Accuracy:</span>
+                        <span class="summary-value" id="accuracy">-</span>
+                    </div>
+                </div>
+                <div class="summary-notes" id="summaryNotes"></div>
+            </div>
+
+            <!-- Financial Data Form -->
+            <div class="data-form-section">
+                <h2 class="section-title">Financial Information</h2>
+                <p class="form-description">Please review and edit the extracted financial data. All amounts should be annual figures.</p>
+                
+                <form id="financialForm" class="financial-form">
+                    <!-- Salary Information -->
+                    <div class="form-group">
+                        <h3 class="group-title">Salary Information</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="grossSalary">Gross Salary (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="grossSalary" name="gross_salary" step="0.01" min="0" required>
+                                </div>
+                                <small class="field-help">Total annual gross salary before deductions</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="basicSalary">Basic Salary (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="basicSalary" name="basic_salary" step="0.01" min="0" required>
+                                </div>
+                                <small class="field-help">Basic salary component (usually 40-50% of gross)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HRA Information -->
+                    <div class="form-group">
+                        <h3 class="group-title">HRA (House Rent Allowance)</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="hraReceived">HRA Received (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="hraReceived" name="hra_received" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">HRA amount received from employer</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="rentPaid">Rent Paid (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="rentPaid" name="rent_paid" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">Total rent paid during the year</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deductions -->
+                    <div class="form-group">
+                        <h3 class="group-title">Tax Deductions</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="deduction80c">80C Investments (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="deduction80c" name="deduction_80c" step="0.01" min="0" max="150000" value="0">
+                                </div>
+                                <small class="field-help">EPF, ELSS, PPF, etc. (max ₹1,50,000)</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="deduction80d">80D Medical Insurance (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="deduction80d" name="deduction_80d" step="0.01" min="0" max="25000" value="0">
+                                </div>
+                                <small class="field-help">Health insurance premiums (max ₹25,000)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="standardDeduction">Standard Deduction</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="standardDeduction" name="standard_deduction" step="0.01" min="0" value="50000" readonly>
+                                </div>
+                                <small class="field-help">Fixed deduction for all salaried employees</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="professionalTax">Professional Tax (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="professionalTax" name="professional_tax" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">Professional tax paid to state government</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TDS Information -->
+                    <div class="form-group">
+                        <h3 class="group-title">Tax Deducted at Source</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="tds">TDS Amount (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="tds" name="tds" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">Tax already deducted by employer</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Messages -->
+                    <div id="validationMessages" class="validation-messages" style="display: none;">
+                        <div class="validation-header">
+                            <span class="validation-icon">⚠️</span>
+                            <h3>Please fix the following issues:</h3>
+                        </div>
+                        <ul id="validationList" class="validation-list"></ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="goBack()">Back</button>
+                        <button type="button" class="btn-secondary" onclick="saveDraft()">Save Draft</button>
+                        <button type="submit" class="btn-primary">Proceed to Tax Calculation</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Tax Advisor Application. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="../static/js/review_form.js?v=3.0"></script>
+</body>
+</html>
+

@@ -1,0 +1,13 @@
+# Cursor IDE ignore file
+# This file specifies which files should be ignored by Cursor IDE
+# We want to make sure .env is NOT ignored so it's visible in the IDE
+
+# Ignore typical files but NOT .env
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+
+# Make sure .env is explicitly NOT ignored by not listing it here
+

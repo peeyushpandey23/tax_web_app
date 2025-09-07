@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Calculation Results - Tax Advisor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Aptos+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/tax_results.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">Tax Advisor Application</h1>
+                <p class="header-subtitle">Tax Calculation Results</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Indicator -->
+            <div class="progress-bar">
+                <div class="progress-step completed">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Upload</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step completed">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Review</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step completed">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Calculate</span>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <span class="step-number">4</span>
+                    <span class="step-label">AI Advisor</span>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-spinner"></div>
+                <h2>Calculating Your Tax...</h2>
+                <p>Please wait while we process your financial data</p>
+            </div>
+
+            <!-- Results Container -->
+            <div id="resultsContainer" class="results-container" style="display: none;">
+                <!-- Summary Section -->
+                <div class="summary-section">
+                    <h2 class="section-title">Tax Calculation Summary</h2>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="card-icon">💰</div>
+                            <div class="card-content">
+                                <h3>Gross Income</h3>
+                                <p class="amount" id="grossIncome">₹0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card best-regime">
+                            <div class="card-icon">🏆</div>
+                            <div class="card-content">
+                                <h3>Best Regime</h3>
+                                <p class="regime" id="bestRegime">-</p>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-card savings">
+                            <div class="card-icon">💡</div>
+                            <div class="card-content">
+                                <h3>Potential Savings</h3>
+                                <p class="amount" id="taxSavings">₹0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regime Comparison -->
+                <div class="comparison-section">
+                    <h2 class="section-title">Tax Regime Comparison</h2>
+                    <div class="regime-comparison">
+                        <!-- Old Regime -->
+                        <div class="regime-card" id="oldRegimeCard">
+                            <div class="regime-header">
+                                <h3>Old Tax Regime</h3>
+                                <div class="regime-badge old">With Deductions</div>
+                            </div>
+                            
+                            <div class="tax-amount">
+                                <span class="currency">₹</span>
+                                <span class="amount" id="oldRegimeTax">0</span>
+                            </div>
+                            
+                            <div class="regime-details">
+                                <div class="detail-item">
+                                    <span class="label">Taxable Income:</span>
+                                    <span class="value" id="oldTaxableIncome">₹0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Total Deductions:</span>
+                                    <span class="value" id="oldTotalDeductions">₹0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Tax Amount:</span>
+                                    <span class="value" id="oldTaxAmount">₹0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Cess (4%):</span>
+                                    <span class="value" id="oldCessAmount">₹0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="deduction-breakdown">
+                                <h4>Deductions Applied</h4>
+                                <div class="deduction-list" id="oldDeductionList">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="slab-breakdown">
+                                <h4>Tax Slab Breakdown</h4>
+                                <div class="slab-list" id="oldSlabList">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Regime -->
+                        <div class="regime-card" id="newRegimeCard">
+                            <div class="regime-header">
+                                <h3>New Tax Regime</h3>
+                                <div class="regime-badge new">No Deductions</div>
+                            </div>
+                            
+                            <div class="tax-amount">
+                                <span class="currency">₹</span>
+                                <span class="amount" id="newRegimeTax">0</span>
+                            </div>
+                            
+                            <div class="regime-details">
+                                <div class="detail-item">
+                                    <span class="label">Taxable Income:</span>
+                                    <span class="value" id="newTaxableIncome">₹0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Total Deductions:</span>
+                                    <span class="value" id="newTotalDeductions">₹0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Tax Amount:</span>
+                                    <span class="value" id="newTaxAmount">₹0</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="label">Cess (4%):</span>
+                                    <span class="value" id="newCessAmount">₹0</span>
+                                </div>
+                            </div>
+                            
+                            <div class="deduction-breakdown">
+                                <h4>Deductions Applied</h4>
+                                <div class="deduction-list" id="newDeductionList">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="slab-breakdown">
+                                <h4>Tax Slab Breakdown</h4>
+                                <div class="slab-list" id="newSlabList">
+                                    <!-- Populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regime Selection -->
+                <div class="selection-section">
+                    <h2 class="section-title">Choose Your Tax Regime</h2>
+                    <p class="selection-description">Select the regime you want to opt for this financial year:</p>
+                    
+                    <div class="regime-selection">
+                        <label class="regime-option">
+                            <input type="radio" name="regimeSelection" value="old" id="oldRegimeOption">
+                            <div class="option-content">
+                                <h3>Old Tax Regime</h3>
+                                <p>With all deductions and exemptions</p>
+                                <div class="option-details">
+                                    <span class="tax-amount">₹<span id="oldRegimeOptionTax">0</span></span>
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label class="regime-option">
+                            <input type="radio" name="regimeSelection" value="new" id="newRegimeOption">
+                            <div class="option-content">
+                                <h3>New Tax Regime</h3>
+                                <p>Simplified structure, no deductions</p>
+                                <div class="option-details">
+                                    <span class="tax-amount">₹<span id="newRegimeOptionTax">0</span></span>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <button class="btn-primary" id="saveSelectionBtn" onclick="saveRegimeSelection()">
+                        Save Selection
+                    </button>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="recommendations-section">
+                    <h2 class="section-title">Tax-Saving Recommendations</h2>
+                    <div class="recommendations-container" id="recommendationsContainer">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn-secondary" onclick="goBack()">Back</button>
+                    <button class="btn-primary" onclick="proceedToAIAdvisor()">Continue to AI Advisor</button>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h2>Calculation Failed</h2>
+                <p id="errorMessage">Something went wrong during tax calculation.</p>
+                <button class="btn-secondary" onclick="retryCalculation()">Try Again</button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Tax Advisor Application. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="../static/js/tax_results.js?v=2.0"></script>
+</body>
+</html>
+
