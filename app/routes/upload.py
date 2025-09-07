@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 
 from app.database import db_manager
@@ -24,6 +24,7 @@ os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
 @router.post("/upload")
 async def upload_documents(
+    request: Request,
     document_type: str = Form(...),
     files: List[UploadFile] = File(...)
 ):
@@ -90,8 +91,14 @@ async def upload_documents(
         # Create session ID
         session_id = str(uuid.uuid4())
         
+        # Extract user_id from headers
+        user_id = request.headers.get('X-User-ID')
+        if not user_id:
+            logger.warning("No user_id provided in headers, using session_id as fallback")
+            user_id = session_id
+        
         # Store in database as draft
-        await save_financial_data_draft(session_id, final_data)
+        await save_financial_data_draft(session_id, final_data, user_id)
         
         logger.info(f"Successfully processed {len(files)} files for session {session_id}")
         
@@ -265,12 +272,103 @@ async def save_draft(financial_data: UserFinancialsCreate):
         logger.error(f"Failed to save draft: {e}")
         raise HTTPException(status_code=500, detail="Failed to save draft")
 
+@router.get("/debug-drafts")
+async def debug_drafts(request: Request):
+    """Debug endpoint to see all drafts in database"""
+    try:
+        user_id = request.headers.get('X-User-ID')
+        
+        # Get all drafts regardless of user
+        query = """
+        SELECT session_id, user_id, gross_salary, created_at, is_draft, status
+        FROM "UserFinancials"
+        WHERE is_draft = TRUE
+        ORDER BY created_at DESC
+        LIMIT 10
+        """
+        
+        drafts = await db_manager.fetch_all(query)
+        logger.info(f"Found {len(drafts)} total drafts in database")
+        
+        # Count drafts per user
+        user_draft_counts = {}
+        for draft in drafts:
+            uid = draft.get('user_id', 'NULL')
+            user_draft_counts[uid] = user_draft_counts.get(uid, 0) + 1
+        
+        return {
+            "total_drafts": len(drafts),
+            "drafts": drafts,
+            "current_user_id": user_id,
+            "drafts_per_user": user_draft_counts,
+            "note": "After cleanup, each user should have max 1 draft"
+        }
+        
+    except Exception as e:
+        logger.error(f"Debug drafts failed: {e}")
+        return {"error": str(e)}
+
+@router.get("/test-drafts")
+async def test_drafts(request: Request):
+    """Test endpoint to debug draft issues"""
+    user_id = request.headers.get('X-User-ID')
+    logger.info(f"Test endpoint called - user_id from header: {user_id}")
+    logger.info(f"All headers: {dict(request.headers)}")
+    return {
+        "user_id_from_header": user_id,
+        "all_headers": dict(request.headers),
+        "message": "Test endpoint working"
+    }
+
 @router.get("/drafts")
-async def get_drafts():
+async def get_drafts(request: Request):
     """
-    Get all available drafts
+    Get drafts for the current user and clean up old drafts if multiple exist
     """
     try:
+        # Extract user_id from headers
+        user_id = request.headers.get('X-User-ID')
+        logger.info(f"Drafts endpoint called - user_id from header: {user_id}")
+        logger.info(f"Drafts endpoint headers: {dict(request.headers)}")
+        
+        if not user_id:
+            logger.warning("No user_id provided in headers for drafts request")
+            return []
+        
+        # First, check how many drafts exist for this user
+        count_query = """
+        SELECT COUNT(*) as draft_count
+        FROM "UserFinancials"
+        WHERE is_draft = TRUE AND user_id = $1
+        AND (draft_expires_at IS NULL OR draft_expires_at > NOW())
+        """
+        
+        count_result = await db_manager.fetch_one(count_query, user_id)
+        draft_count = count_result['draft_count'] if count_result else 0
+        
+        logger.info(f"Found {draft_count} drafts for user {user_id}")
+        
+        # If multiple drafts exist, clean up old ones (keep only the latest)
+        if draft_count > 1:
+            logger.info(f"Multiple drafts found ({draft_count}), cleaning up old ones...")
+            cleanup_query = """
+            WITH latest_draft AS (
+                SELECT session_id
+                FROM "UserFinancials"
+                WHERE is_draft = TRUE AND user_id = $1
+                ORDER BY created_at DESC
+                LIMIT 1
+            )
+            DELETE FROM "UserFinancials"
+            WHERE is_draft = TRUE 
+            AND user_id = $1 
+            AND session_id NOT IN (SELECT session_id FROM latest_draft)
+            """
+            
+            await db_manager.execute_query(cleanup_query, user_id)
+            logger.info(f"Cleaned up old drafts for user {user_id}, kept only the latest one")
+        
+        # Now get the remaining draft(s) - should be 0 or 1
         query = """
         SELECT session_id, gross_salary, basic_salary, hra_received, rent_paid,
                deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
@@ -278,10 +376,12 @@ async def get_drafts():
         FROM "UserFinancials"
         WHERE is_draft = TRUE AND status = 'draft'
         AND (draft_expires_at IS NULL OR draft_expires_at > NOW())
+        AND user_id = $1
         ORDER BY created_at DESC
         """
         
-        drafts = await db_manager.fetch_all(query)
+        drafts = await db_manager.fetch_all(query, user_id)
+        logger.info(f"Returning {len(drafts)} draft(s) for user {user_id}")
         
         # Convert to response format
         draft_list = []
@@ -310,11 +410,17 @@ async def get_drafts():
         raise HTTPException(status_code=500, detail="Failed to retrieve drafts")
 
 @router.get("/draft/{draft_id}")
-async def get_draft(draft_id: str):
+async def get_draft(draft_id: str, request: Request):
     """
-    Get specific draft by ID
+    Get specific draft by ID (only if it belongs to the current user)
     """
     try:
+        # Extract user_id from headers
+        user_id = request.headers.get('X-User-ID')
+        if not user_id:
+            logger.warning("No user_id provided in headers for draft request")
+            raise HTTPException(status_code=401, detail="User identification required")
+        
         query = """
         SELECT session_id, gross_salary, basic_salary, hra_received, rent_paid,
                deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
@@ -322,9 +428,10 @@ async def get_draft(draft_id: str):
         FROM "UserFinancials"
         WHERE session_id = $1 AND is_draft = TRUE AND status = 'draft'
         AND (draft_expires_at IS NULL OR draft_expires_at > NOW())
+        AND user_id = $2
         """
         
-        draft = await db_manager.fetch_one(query, draft_id)
+        draft = await db_manager.fetch_one(query, draft_id, user_id)
         
         if not draft:
             raise HTTPException(status_code=404, detail="Draft not found or expired")
@@ -352,18 +459,18 @@ async def get_draft(draft_id: str):
         logger.error(f"Failed to retrieve draft {draft_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve draft")
 
-async def save_financial_data_draft(session_id: str, financial_data: dict):
+async def save_financial_data_draft(session_id: str, financial_data: dict, user_id: str = None):
     """
     Helper function to save financial data as draft during upload
     """
     try:
         query = """
         INSERT INTO "UserFinancials" (
-            session_id, gross_salary, basic_salary, hra_received, rent_paid,
+            session_id, user_id, gross_salary, basic_salary, hra_received, rent_paid,
             deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
             status, is_draft, draft_expires_at, created_at
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW()
         )
         """
         
@@ -372,6 +479,7 @@ async def save_financial_data_draft(session_id: str, financial_data: dict):
         await db_manager.execute_query(
             query,
             session_id,
+            user_id,
             financial_data.get('gross_salary', 0),
             financial_data.get('basic_salary', 0),
             financial_data.get('hra_received', 0),

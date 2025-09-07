@@ -96,6 +96,18 @@
                         <p>or click to browse</p>
                         <input type="file" id="fileInput" accept=".pdf" style="display: none;">
                     </div>
+                    <div class="file-status" id="singleFileStatus" style="display: none;">
+                        <div class="file-item">
+                            <div class="file-info">
+                                <div class="file-icon">📄</div>
+                                <div class="file-details">
+                                    <h4 id="singleFileName">-</h4>
+                                    <p id="singleFileSize">-</p>
+                                </div>
+                            </div>
+                            <button class="file-remove" onclick="documentUploader.clearSingleFile()" title="Remove file">×</button>
+                        </div>
+                    </div>
                     <div class="upload-info">
                         <p>Supported format: PDF only</p>
                         <p>Maximum size: 10MB</p>
@@ -155,7 +167,8 @@
         </footer>
     </div>
 
-    <script src="../static/js/upload.js?v=2.0"></script>
+    <script src="../static/js/cookie-manager.js"></script>
+    <script src="../static/js/upload.js?v=12.0"></script>
 </body>
 </html>
 

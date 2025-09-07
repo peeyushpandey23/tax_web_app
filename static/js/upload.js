@@ -7,8 +7,105 @@ class DocumentUploader {
         this.maxFileSize = 10 * 1024 * 1024; // 10MB
         this.maxFiles = 4;
         
+        // Wait for CookieManager to be available
+        if (typeof CookieManager === 'undefined') {
+            console.error('CookieManager not available, retrying in 100ms...');
+            setTimeout(() => {
+                this.userId = CookieManager.getOrCreateUserId();
+                this.initializeAfterCookieManager();
+            }, 100);
+        } else {
+            this.userId = CookieManager.getOrCreateUserId();
+            this.initializeAfterCookieManager();
+        }
+    }
+    
+    initializeAfterCookieManager() {
+        console.log('DocumentUploader initialized with user ID:', this.userId);
+        console.log('CookieManager available:', typeof CookieManager !== 'undefined');
+        
         this.initializeEventListeners();
         this.updateUploadInterface();
+        this.checkForDrafts();
+    }
+    
+    async checkForDrafts() {
+        console.log('🚨🚨🚨 CHECKING FOR DRAFTS METHOD CALLED 🚨🚨🚨');
+        console.log('User ID:', this.userId);
+        
+        try {
+            console.log('Checking for drafts for user:', this.userId);
+            console.log('User ID type:', typeof this.userId);
+            console.log('User ID length:', this.userId ? this.userId.length : 'null');
+            
+            // First test the headers
+            const testResponse = await fetch('/api/test-drafts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': this.userId
+                }
+            });
+            
+            console.log('Test response status:', testResponse.status);
+            
+            if (testResponse.ok) {
+                const testData = await testResponse.json();
+                console.log('Test endpoint response:', testData);
+            } else {
+                console.error('Test endpoint failed:', testResponse.status);
+            }
+            
+            // Debug: Check all drafts in database
+            const debugResponse = await fetch('/api/debug-drafts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': this.userId
+                }
+            });
+            
+            if (debugResponse.ok) {
+                const debugData = await debugResponse.json();
+                console.log('Debug drafts response:', debugData);
+            }
+            
+            const response = await fetch('/api/drafts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': this.userId
+                }
+            });
+            
+            console.log('Drafts API response status:', response.status);
+            
+            if (response.ok) {
+                const drafts = await response.json();
+                console.log('Drafts received:', drafts);
+                console.log('Drafts type:', typeof drafts);
+                console.log('Drafts is array:', Array.isArray(drafts));
+                console.log('Number of drafts:', drafts.length);
+                console.log('First draft:', drafts[0]);
+                
+                if (drafts && drafts.length > 0) {
+                    console.log('Calling showDraftNotification with draft:', drafts[0]);
+                    console.log('About to call showDraftNotification...');
+                    try {
+                        showDraftNotification(drafts[0]); // Show most recent draft
+                        console.log('showDraftNotification call completed');
+                    } catch (error) {
+                        console.error('Error in showDraftNotification:', error);
+                    }
+                } else {
+                    console.log('No drafts found for user');
+                }
+            } else {
+                console.error('Drafts API failed:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('Failed to check for drafts:', error);
+        }
     }
     
     initializeEventListeners() {
@@ -56,6 +153,28 @@ class DocumentUploader {
         }
         
         this.updateProcessButton();
+        this.updateUploadZoneAppearance();
+    }
+    
+    updateUploadZoneAppearance() {
+        const uploadZone = document.getElementById('uploadZone');
+        if (!uploadZone) return;
+        
+        const uploadIcon = uploadZone.querySelector('.upload-icon');
+        const uploadTitle = uploadZone.querySelector('h3');
+        const uploadSubtitle = uploadZone.querySelector('p');
+        
+        if (this.uploadedFiles.length > 0) {
+            uploadIcon.textContent = '✅';
+            uploadTitle.textContent = 'File Selected!';
+            uploadSubtitle.textContent = 'Click to change or drag another file';
+            uploadZone.classList.add('file-selected');
+        } else {
+            uploadIcon.textContent = '📁';
+            uploadTitle.textContent = 'Drag & Drop PDF here';
+            uploadSubtitle.textContent = 'or click to browse';
+            uploadZone.classList.remove('file-selected');
+        }
     }
     
     handleDragOver(e) {
@@ -98,12 +217,13 @@ class DocumentUploader {
                 this.uploadedFiles = this.uploadedFiles.slice(0, this.maxFiles);
                 this.showError(`Maximum ${this.maxFiles} files allowed. Only first ${this.maxFiles} files will be processed.`);
             }
+            this.updateFileList();
         } else {
             // For single file, replace existing
             this.uploadedFiles = validFiles.slice(0, 1);
+            this.updateSingleFileStatus();
         }
         
-        this.updateFileList();
         this.updateProcessButton();
     }
     
@@ -121,6 +241,36 @@ class DocumentUploader {
         }
         
         return true;
+    }
+    
+    updateSingleFileStatus() {
+        const singleFileStatus = document.getElementById('singleFileStatus');
+        const singleFileName = document.getElementById('singleFileName');
+        const singleFileSize = document.getElementById('singleFileSize');
+        
+        if (this.uploadedFiles.length > 0) {
+            const file = this.uploadedFiles[0];
+            singleFileName.textContent = file.name;
+            singleFileSize.textContent = this.formatFileSize(file.size);
+            singleFileStatus.style.display = 'block';
+            
+            // Add success indicator
+            singleFileStatus.classList.add('file-selected');
+        } else {
+            singleFileStatus.style.display = 'none';
+            singleFileStatus.classList.remove('file-selected');
+        }
+        
+        // Update upload zone appearance
+        this.updateUploadZoneAppearance();
+    }
+    
+    clearSingleFile() {
+        this.uploadedFiles = [];
+        this.updateSingleFileStatus();
+        this.updateProcessButton();
+        // Clear the file input
+        document.getElementById('fileInput').value = '';
     }
     
     updateFileList() {
@@ -188,6 +338,7 @@ class DocumentUploader {
     clearFiles() {
         this.uploadedFiles = [];
         this.updateFileList();
+        this.updateSingleFileStatus();
         this.updateProcessButton();
         
         // Clear file inputs
@@ -232,6 +383,9 @@ class DocumentUploader {
             // Upload files
             const response = await fetch('/api/upload', {
                 method: 'POST',
+                headers: {
+                    'X-User-ID': this.userId
+                },
                 body: formData
             });
             
@@ -343,6 +497,9 @@ async function checkForExistingDraft() {
 }
 
 function showDraftNotification(draft) {
+    console.log('showDraftNotification called with:', draft);
+    console.log('Draft properties:', Object.keys(draft));
+    
     const notification = document.createElement('div');
     notification.className = 'draft-notification';
     notification.innerHTML = `
@@ -371,7 +528,14 @@ function showDraftNotification(draft) {
         max-width: 350px;
     `;
     
+    // Add to page
+    console.log('Adding notification to DOM...');
     document.body.appendChild(notification);
+    console.log('Notification added to DOM, checking if visible...');
+    console.log('Notification element:', notification);
+    console.log('Notification parent:', notification.parentNode);
+    console.log('Notification computed style:', window.getComputedStyle(notification));
+    console.log('Notification offset:', notification.offsetWidth, notification.offsetHeight);
     
     // Auto-dismiss after 10 seconds
     setTimeout(() => {
@@ -383,7 +547,11 @@ function showDraftNotification(draft) {
 
 async function loadDraft(draftId) {
     try {
-        const response = await fetch(`/api/draft/${draftId}`);
+        const response = await fetch(`/api/draft/${draftId}`, {
+            headers: {
+                'X-User-ID': CookieManager.getCurrentUserId()
+            }
+        });
         if (response.ok) {
             const draft = await response.json();
             

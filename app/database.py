@@ -235,6 +235,7 @@ class DatabaseManager:
             user_financials_table = """
             CREATE TABLE IF NOT EXISTS "UserFinancials" (
                 session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id VARCHAR(36),
                 gross_salary NUMERIC(15, 2) NOT NULL,
                 basic_salary NUMERIC(15, 2) NOT NULL,
                 hra_received NUMERIC(15, 2) DEFAULT 0,
@@ -296,11 +297,39 @@ class DatabaseManager:
                 await conn.execute(indexes)
                 await conn.execute(constraint)
             
+            # Add user_id column if it doesn't exist (for existing databases)
+            await self._migrate_add_user_id_column()
+            
             logger.info("UserFinancials and TaxComparison tables created successfully")
             
         except Exception as e:
             logger.error(f"Failed to create tables: {e}")
             raise
+    
+    async def _migrate_add_user_id_column(self) -> None:
+        """Add user_id column to existing UserFinancials table if it doesn't exist"""
+        try:
+            migration_query = """
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'user_id'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN user_id VARCHAR(36);
+                    CREATE INDEX IF NOT EXISTS idx_userfinancials_user_id ON "UserFinancials"(user_id);
+                END IF;
+            END $$;
+            """
+            
+            async with self.get_connection() as conn:
+                await conn.execute(migration_query)
+                logger.info("Migration completed: user_id column added if needed")
+                
+        except Exception as e:
+            logger.error(f"Migration failed: {e}")
+            # Don't raise exception as this is not critical for app startup
     
     # CRUD Methods for REST-style operations
     async def insert_record(self, table: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:

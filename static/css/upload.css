@@ -215,6 +215,15 @@
     transform: scale(1.02);
 }
 
+.upload-zone.file-selected {
+    border-color: #28a745;
+    background: #f8fff9;
+}
+
+.upload-zone.file-selected .upload-icon {
+    color: #28a745;
+}
+
 .upload-icon {
     font-size: 4rem;
     margin-bottom: 1rem;
@@ -246,11 +255,33 @@
     font-size: 0.9rem;
 }
 
-/* File List */
+/* File Status and File List */
+.file-status {
+    margin-top: 1rem;
+    animation: slideIn 0.3s ease-out;
+}
+
+.file-status.file-selected {
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    background: #f8fff9;
+}
+
 .file-list {
     margin-top: 1rem;
     max-height: 200px;
     overflow-y: auto;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .file-item {

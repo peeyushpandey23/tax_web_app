@@ -40,6 +40,7 @@ class UserFinancialsBase(BaseModel):
 class UserFinancialsCreate(UserFinancialsBase):
     """Model for creating new user financial records"""
     session_id: Optional[Union[UUID, str]] = None
+    user_id: Optional[str] = None
     pass
 
 class UserFinancialsUpdate(BaseModel):
@@ -118,3 +119,14 @@ class RegimeSelection(BaseModel):
     """Model for regime selection"""
     session_id: UUID
     selected_regime: str = Field(..., pattern='^(old|new)$')
+    created_at: datetime
+    
+    model_config = {"from_attributes": True}
+
+class UserTracking(BaseModel):
+    """Model for user tracking and cookie management"""
+    user_id: str = Field(..., description="Unique user identifier")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_accessed: datetime = Field(default_factory=datetime.utcnow)
+    
+    model_config = {"from_attributes": True}
