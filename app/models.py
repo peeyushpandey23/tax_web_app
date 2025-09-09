@@ -200,7 +200,7 @@ class AIAdvisorConversationBase(BaseModel):
     session_id: UUID
     conversation_round: int = Field(..., ge=1, le=4)
     gemini_question: str = Field(..., min_length=10, max_length=500)
-    user_response: str = Field(..., min_length=5, max_length=1000)
+    user_response: str = Field(..., min_length=0, max_length=1000)  # Allow empty responses for initial conversation
     conversation_context: Optional[dict] = None
 
 class AIAdvisorConversationCreate(AIAdvisorConversationBase):

@@ -55,6 +55,17 @@ async def start_conversation(request: Request):
         # Generate initial question
         result = ai_advisor.generate_initial_question()
         
+        # Store initial conversation context
+        conversation_data = AIAdvisorConversationCreate(
+            session_id=uuid.UUID(session_id),
+            conversation_round=result['round'],
+            gemini_question=result['question'],
+            user_response="",  # Empty for initial question
+            conversation_context=result['context']
+        )
+        
+        await _store_conversation(conversation_data)
+        
         logger.info(f"Started AI conversation for session {session_id}")
         
         return {
@@ -89,8 +100,14 @@ async def process_response(request: Request):
         if not financial_data or not tax_results:
             raise HTTPException(status_code=404, detail="Financial data or tax results not found")
         
-        # Initialize AI Advisor
+        # Get existing conversation context from database
+        conversation_context = await _get_conversation_context(session_id)
+        
+        # Initialize AI Advisor with existing context
         ai_advisor = AIAdvisor(financial_data, tax_results)
+        if conversation_context:
+            ai_advisor.conversation_context = conversation_context
+            ai_advisor.current_round = round_number
         
         # Store conversation in database
         conversation_data = AIAdvisorConversationCreate(
@@ -98,7 +115,7 @@ async def process_response(request: Request):
             conversation_round=round_number,
             gemini_question=question,
             user_response=response,
-            conversation_context={}
+            conversation_context=ai_advisor.conversation_context
         )
         
         await _store_conversation(conversation_data)
@@ -180,6 +197,48 @@ async def get_conversation_history(session_id: str):
         raise HTTPException(status_code=500, detail="Failed to get conversation history")
 
 # Helper functions
+async def _get_conversation_context(session_id: str) -> Optional[Dict]:
+    """Get conversation context from database"""
+    try:
+        query = """
+        SELECT conversation_round, gemini_question, user_response, conversation_context
+        FROM "AIAdvisorConversation"
+        WHERE session_id = $1
+        ORDER BY conversation_round ASC
+        """
+        
+        results = await db_manager.fetch_all(query, uuid.UUID(session_id))
+        if not results:
+            return None
+        
+        # Reconstruct conversation context from all records
+        context = {
+            'financial_context': '',
+            'questions_asked': [],
+            'user_responses': [],
+            'insights_gathered': [],
+            'advisor_persona': 'Senior CA & Financial Advisor'
+        }
+        
+        for result in results:
+            # Add question and response
+            if result['gemini_question']:
+                context['questions_asked'].append(result['gemini_question'])
+            if result['user_response']:
+                context['user_responses'].append(result['user_response'])
+            
+            # Get context from the latest record
+            if result['conversation_context']:
+                import json
+                latest_context = json.loads(result['conversation_context'])
+                context.update(latest_context)
+        
+        return context
+        
+    except Exception as e:
+        logger.error(f"Failed to get conversation context: {e}")
+        return None
+
 async def _get_financial_data(session_id: str) -> Optional[Dict]:
     """Get financial data for a session"""
     try:
