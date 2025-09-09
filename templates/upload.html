@@ -8,7 +8,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Aptos+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../static/css/style.css">
-    <link rel="stylesheet" href="../static/css/upload.css">
+    <link rel="stylesheet" href="../static/css/upload.css?v=19.0">
+    <style>
+        /* Fallback font loading for Chrome */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        /* Ensure loading spinner works in Chrome */
+        .loading-spinner {
+            animation: spin 1s linear infinite !important;
+            -webkit-animation: spin 1s linear infinite !important;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -45,8 +67,35 @@
                 </div>
             </div>
 
-            <!-- Document Type Selection -->
-            <div class="document-type-section">
+            <!-- Loading State (Shown by default) -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <h3>Checking for saved drafts...</h3>
+                    <p>Please wait while we check if you have any saved work.</p>
+                </div>
+            </div>
+
+            <!-- Draft Option Banner (Hidden by default) -->
+            <div id="draftOptionBanner" class="draft-option-banner" style="display: none;">
+                <div class="draft-banner-content">
+                    <button id="closeDraftBanner" class="draft-banner-close" title="Close banner">×</button>
+                    <div class="draft-banner-icon">💾</div>
+                    <div class="draft-banner-text">
+                        <h3>Saved Draft Available</h3>
+                        <p>You have a saved draft from <span class="draft-date"></span></p>
+                    </div>
+                    <div class="draft-banner-actions">
+                        <button id="loadDraftBtn" class="btn-draft-load">Load Draft</button>
+                        <button id="discardDraftBtn" class="btn-draft-discard">Discard Draft</button>
+                        <button id="dismissDraftBtn" class="btn-draft-dismiss">Continue with Upload</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Type Selection (Hidden by default) -->
+            <div id="uploadInterface" class="upload-interface" style="display: none;">
+                <div class="document-type-section">
                 <h2 class="section-title">Select Document Type</h2>
                 <div class="document-type-options">
                     <label class="document-type-option">
@@ -96,6 +145,19 @@
                         <p>or click to browse</p>
                         <input type="file" id="fileInput" accept=".pdf" style="display: none;">
                     </div>
+                    
+                    <!-- Password input for protected PDFs -->
+                    <div class="password-section" id="singlePasswordSection" style="display: none;">
+                        <div class="password-input-group">
+                            <label for="singlePasswordInput" class="password-label">
+                                <span class="password-icon">🔒</span>
+                                PDF Password (if protected)
+                            </label>
+                            <input type="password" id="singlePasswordInput" class="password-input" placeholder="Enter PDF password">
+                            <button type="button" id="singlePasswordToggle" class="password-toggle" title="Show/Hide password">👁️</button>
+                        </div>
+                        <p class="password-help" id="singlePasswordHelp">Checking password protection...</p>
+                    </div>
                     <div class="file-status" id="singleFileStatus" style="display: none;">
                         <div class="file-item">
                             <div class="file-info">
@@ -122,6 +184,20 @@
                         <p>or click to browse (max 4 files)</p>
                         <input type="file" id="multipleFileInput" accept=".pdf" multiple style="display: none;">
                     </div>
+                    
+                    <!-- Password input for protected PDFs -->
+                    <div class="password-section" id="multiplePasswordSection" style="display: none;">
+                        <div class="password-input-group">
+                            <label for="multiplePasswordInput" class="password-label">
+                                <span class="password-icon">🔒</span>
+                                PDF Password (if protected)
+                            </label>
+                            <input type="password" id="multiplePasswordInput" class="password-input" placeholder="Enter PDF password">
+                            <button type="button" id="multiplePasswordToggle" class="password-toggle" title="Show/Hide password">👁️</button>
+                        </div>
+                        <p class="password-help" id="multiplePasswordHelp">Checking password protection...</p>
+                    </div>
+                    
                     <div class="file-list" id="fileList"></div>
                     <div class="upload-info">
                         <p>Supported format: PDF only</p>
@@ -152,6 +228,8 @@
                 </div>
             </div>
 
+            </div>
+            
             <!-- Action Buttons -->
             <div class="action-buttons">
                 <button class="btn-secondary" onclick="goBack()">Back</button>
@@ -168,7 +246,7 @@
     </div>
 
     <script src="../static/js/cookie-manager.js"></script>
-    <script src="../static/js/upload.js?v=12.0"></script>
+    <script src="../static/js/upload.js?v=29.0"></script>
 </body>
 </html>
 

@@ -4,9 +4,11 @@ import logging
 from typing import List, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
+import tempfile
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
+import PyPDF2
 
 from app.database import db_manager
 from app.models import UserFinancialsCreate, DraftResponse
@@ -22,11 +24,55 @@ router = APIRouter(prefix="/api", tags=["upload"])
 # Ensure upload directory exists
 os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
+@router.post("/check-pdf-password")
+async def check_pdf_password(
+    request: Request,
+    file: UploadFile = File(...)
+):
+    """
+    Check if a PDF file is password-protected
+    """
+    try:
+        # Validate file type
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Only PDF files are supported")
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            content = await file.read()
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Check if PDF is password-protected
+            with open(temp_file_path, 'rb') as pdf_file:
+                pdf_reader = PyPDF2.PdfReader(pdf_file)
+                is_encrypted = pdf_reader.is_encrypted
+                
+                logger.info(f"PDF password check for {file.filename}: encrypted={is_encrypted}")
+                
+                return {
+                    "success": True,
+                    "filename": file.filename,
+                    "is_password_protected": is_encrypted,
+                    "message": "Password-protected PDF detected" if is_encrypted else "PDF is not password-protected"
+                }
+        
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                
+    except Exception as e:
+        logger.error(f"Error checking PDF password protection: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to check PDF: {str(e)}")
+
 @router.post("/upload")
 async def upload_documents(
     request: Request,
     document_type: str = Form(...),
-    files: List[UploadFile] = File(...)
+    files: List[UploadFile] = File(...),
+    pdf_password: Optional[str] = Form(None)
 ):
     """
     Upload and process PDF documents (salary slips or Form 16)
@@ -61,7 +107,7 @@ async def upload_documents(
                     buffer.write(content)
                 
                 # Process PDF
-                result = await pdf_processor.process_pdf(file_path, document_type)
+                result = await pdf_processor.process_pdf(file_path, document_type, pdf_password)
                 
                 if result['success']:
                     processed_files.append({
@@ -135,12 +181,22 @@ async def submit_financials(financial_data: UserFinancialsCreate):
         # Convert to database format (Pydantic already validates these as Decimal)
         db_data = {
             "session_id": session_id,
+            "financial_year": financial_data.financial_year,
+            "age": financial_data.age,
             "gross_salary": float(financial_data.gross_salary),
             "basic_salary": float(financial_data.basic_salary),
             "hra_received": float(financial_data.hra_received),
             "rent_paid": float(financial_data.rent_paid),
+            "lta_received": float(financial_data.lta_received),
+            "other_exemptions": float(financial_data.other_exemptions),
             "deduction_80c": float(financial_data.deduction_80c),
             "deduction_80d": float(financial_data.deduction_80d),
+            "deduction_80dd": float(financial_data.deduction_80dd),
+            "deduction_80e": float(financial_data.deduction_80e),
+            "deduction_80tta": float(financial_data.deduction_80tta),
+            "home_loan_interest": float(financial_data.home_loan_interest),
+            "other_deductions": float(financial_data.other_deductions) if financial_data.other_deductions is not None else 0,
+            "other_income": float(financial_data.other_income) if financial_data.other_income is not None else 0,
             "standard_deduction": float(financial_data.standard_deduction),
             "professional_tax": float(financial_data.professional_tax),
             "tds": float(financial_data.tds),
@@ -152,19 +208,30 @@ async def submit_financials(financial_data: UserFinancialsCreate):
         # Insert or update in database
         query = """
         INSERT INTO "UserFinancials" (
-            session_id, gross_salary, basic_salary, hra_received, rent_paid,
-            deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
-            status, is_draft, draft_expires_at, created_at
+            session_id, financial_year, age, gross_salary, basic_salary, hra_received, rent_paid,
+            lta_received, other_exemptions, deduction_80c, deduction_80d, deduction_80dd,
+            deduction_80e, deduction_80tta, home_loan_interest, other_deductions, other_income,
+            standard_deduction, professional_tax, tds, status, is_draft, draft_expires_at, created_at
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW()
         )
         ON CONFLICT (session_id) DO UPDATE SET
+            financial_year = EXCLUDED.financial_year,
+            age = EXCLUDED.age,
             gross_salary = EXCLUDED.gross_salary,
             basic_salary = EXCLUDED.basic_salary,
             hra_received = EXCLUDED.hra_received,
             rent_paid = EXCLUDED.rent_paid,
+            lta_received = EXCLUDED.lta_received,
+            other_exemptions = EXCLUDED.other_exemptions,
             deduction_80c = EXCLUDED.deduction_80c,
             deduction_80d = EXCLUDED.deduction_80d,
+            deduction_80dd = EXCLUDED.deduction_80dd,
+            deduction_80e = EXCLUDED.deduction_80e,
+            deduction_80tta = EXCLUDED.deduction_80tta,
+            home_loan_interest = EXCLUDED.home_loan_interest,
+            other_deductions = EXCLUDED.other_deductions,
+            other_income = EXCLUDED.other_income,
             standard_deduction = EXCLUDED.standard_deduction,
             professional_tax = EXCLUDED.professional_tax,
             tds = EXCLUDED.tds,
@@ -176,10 +243,14 @@ async def submit_financials(financial_data: UserFinancialsCreate):
         logger.info(f"Executing database query with data: {db_data}")
         await db_manager.execute_query(
             query,
-            db_data["session_id"], db_data["gross_salary"], db_data["basic_salary"],
-            db_data["hra_received"], db_data["rent_paid"], db_data["deduction_80c"],
-            db_data["deduction_80d"], db_data["standard_deduction"], db_data["professional_tax"],
-            db_data["tds"], db_data["status"], db_data["is_draft"], db_data["draft_expires_at"]
+            db_data["session_id"], db_data["financial_year"], db_data["age"],
+            db_data["gross_salary"], db_data["basic_salary"], db_data["hra_received"], 
+            db_data["rent_paid"], db_data["lta_received"], db_data["other_exemptions"],
+            db_data["deduction_80c"], db_data["deduction_80d"], db_data["deduction_80dd"],
+            db_data["deduction_80e"], db_data["deduction_80tta"], db_data["home_loan_interest"],
+            db_data["other_deductions"], db_data["other_income"], db_data["standard_deduction"],
+            db_data["professional_tax"], db_data["tds"], db_data["status"], 
+            db_data["is_draft"], db_data["draft_expires_at"]
         )
         
         logger.info(f"Financial data submitted successfully for session {session_id}")
@@ -214,12 +285,22 @@ async def save_draft(financial_data: UserFinancialsCreate):
         # Convert to database format
         db_data = {
             "session_id": session_id,
+            "financial_year": financial_data.financial_year,
+            "age": financial_data.age,
             "gross_salary": float(financial_data.gross_salary),
             "basic_salary": float(financial_data.basic_salary),
             "hra_received": float(financial_data.hra_received),
             "rent_paid": float(financial_data.rent_paid),
+            "lta_received": float(financial_data.lta_received),
+            "other_exemptions": float(financial_data.other_exemptions),
             "deduction_80c": float(financial_data.deduction_80c),
             "deduction_80d": float(financial_data.deduction_80d),
+            "deduction_80dd": float(financial_data.deduction_80dd),
+            "deduction_80e": float(financial_data.deduction_80e),
+            "deduction_80tta": float(financial_data.deduction_80tta),
+            "home_loan_interest": float(financial_data.home_loan_interest),
+            "other_deductions": float(financial_data.other_deductions) if financial_data.other_deductions is not None else 0,
+            "other_income": float(financial_data.other_income) if financial_data.other_income is not None else 0,
             "standard_deduction": float(financial_data.standard_deduction),
             "professional_tax": float(financial_data.professional_tax),
             "tds": float(financial_data.tds),
@@ -231,19 +312,30 @@ async def save_draft(financial_data: UserFinancialsCreate):
         # Insert or update in database
         query = """
         INSERT INTO "UserFinancials" (
-            session_id, gross_salary, basic_salary, hra_received, rent_paid,
-            deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
-            status, is_draft, draft_expires_at, created_at
+            session_id, financial_year, age, gross_salary, basic_salary, hra_received, rent_paid,
+            lta_received, other_exemptions, deduction_80c, deduction_80d, deduction_80dd,
+            deduction_80e, deduction_80tta, home_loan_interest, other_deductions, other_income,
+            standard_deduction, professional_tax, tds, status, is_draft, draft_expires_at, created_at
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, NOW()
         )
         ON CONFLICT (session_id) DO UPDATE SET
+            financial_year = EXCLUDED.financial_year,
+            age = EXCLUDED.age,
             gross_salary = EXCLUDED.gross_salary,
             basic_salary = EXCLUDED.basic_salary,
             hra_received = EXCLUDED.hra_received,
             rent_paid = EXCLUDED.rent_paid,
+            lta_received = EXCLUDED.lta_received,
+            other_exemptions = EXCLUDED.other_exemptions,
             deduction_80c = EXCLUDED.deduction_80c,
             deduction_80d = EXCLUDED.deduction_80d,
+            deduction_80dd = EXCLUDED.deduction_80dd,
+            deduction_80e = EXCLUDED.deduction_80e,
+            deduction_80tta = EXCLUDED.deduction_80tta,
+            home_loan_interest = EXCLUDED.home_loan_interest,
+            other_deductions = EXCLUDED.other_deductions,
+            other_income = EXCLUDED.other_income,
             standard_deduction = EXCLUDED.standard_deduction,
             professional_tax = EXCLUDED.professional_tax,
             tds = EXCLUDED.tds,
@@ -254,10 +346,14 @@ async def save_draft(financial_data: UserFinancialsCreate):
         
         await db_manager.execute_query(
             query,
-            db_data["session_id"], db_data["gross_salary"], db_data["basic_salary"],
-            db_data["hra_received"], db_data["rent_paid"], db_data["deduction_80c"],
-            db_data["deduction_80d"], db_data["standard_deduction"], db_data["professional_tax"],
-            db_data["tds"], db_data["status"], db_data["is_draft"], db_data["draft_expires_at"]
+            db_data["session_id"], db_data["financial_year"], db_data["age"],
+            db_data["gross_salary"], db_data["basic_salary"], db_data["hra_received"], 
+            db_data["rent_paid"], db_data["lta_received"], db_data["other_exemptions"],
+            db_data["deduction_80c"], db_data["deduction_80d"], db_data["deduction_80dd"],
+            db_data["deduction_80e"], db_data["deduction_80tta"], db_data["home_loan_interest"],
+            db_data["other_deductions"], db_data["other_income"], db_data["standard_deduction"],
+            db_data["professional_tax"], db_data["tds"], db_data["status"], 
+            db_data["is_draft"], db_data["draft_expires_at"]
         )
         
         logger.info(f"Draft saved successfully for session {session_id}")
@@ -370,8 +466,10 @@ async def get_drafts(request: Request):
         
         # Now get the remaining draft(s) - should be 0 or 1
         query = """
-        SELECT session_id, gross_salary, basic_salary, hra_received, rent_paid,
-               deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
+        SELECT session_id, financial_year, age, gross_salary, basic_salary, hra_received, rent_paid,
+               lta_received, other_exemptions, deduction_80c, deduction_80d, deduction_80dd,
+               deduction_80e, deduction_80tta, home_loan_interest, other_deductions,
+               other_income, standard_deduction, professional_tax, tds,
                created_at, draft_expires_at
         FROM "UserFinancials"
         WHERE is_draft = TRUE AND status = 'draft'
@@ -389,12 +487,22 @@ async def get_drafts(request: Request):
             draft_list.append({
                 "draft_id": draft["session_id"],
                 "financial_data": {
+                    "financial_year": draft["financial_year"],
+                    "age": draft["age"],
                     "gross_salary": draft["gross_salary"],
                     "basic_salary": draft["basic_salary"],
                     "hra_received": draft["hra_received"],
                     "rent_paid": draft["rent_paid"],
+                    "lta_received": draft["lta_received"],
+                    "other_exemptions": draft["other_exemptions"],
                     "deduction_80c": draft["deduction_80c"],
                     "deduction_80d": draft["deduction_80d"],
+                    "deduction_80dd": draft["deduction_80dd"],
+                    "deduction_80e": draft["deduction_80e"],
+                    "deduction_80tta": draft["deduction_80tta"],
+                    "home_loan_interest": draft["home_loan_interest"],
+                    "other_deductions": draft["other_deductions"],
+                    "other_income": draft["other_income"],
                     "standard_deduction": draft["standard_deduction"],
                     "professional_tax": draft["professional_tax"],
                     "tds": draft["tds"]
@@ -422,8 +530,10 @@ async def get_draft(draft_id: str, request: Request):
             raise HTTPException(status_code=401, detail="User identification required")
         
         query = """
-        SELECT session_id, gross_salary, basic_salary, hra_received, rent_paid,
-               deduction_80c, deduction_80d, standard_deduction, professional_tax, tds,
+        SELECT session_id, financial_year, age, gross_salary, basic_salary, hra_received, rent_paid,
+               lta_received, other_exemptions, deduction_80c, deduction_80d, deduction_80dd,
+               deduction_80e, deduction_80tta, home_loan_interest, other_deductions,
+               other_income, standard_deduction, professional_tax, tds,
                created_at, draft_expires_at
         FROM "UserFinancials"
         WHERE session_id = $1 AND is_draft = TRUE AND status = 'draft'
@@ -439,12 +549,22 @@ async def get_draft(draft_id: str, request: Request):
         return {
             "draft_id": draft["session_id"],
             "financial_data": {
+                "financial_year": draft["financial_year"],
+                "age": draft["age"],
                 "gross_salary": draft["gross_salary"],
                 "basic_salary": draft["basic_salary"],
                 "hra_received": draft["hra_received"],
                 "rent_paid": draft["rent_paid"],
+                "lta_received": draft["lta_received"],
+                "other_exemptions": draft["other_exemptions"],
                 "deduction_80c": draft["deduction_80c"],
                 "deduction_80d": draft["deduction_80d"],
+                "deduction_80dd": draft["deduction_80dd"],
+                "deduction_80e": draft["deduction_80e"],
+                "deduction_80tta": draft["deduction_80tta"],
+                "home_loan_interest": draft["home_loan_interest"],
+                "other_deductions": draft["other_deductions"],
+                "other_income": draft["other_income"],
                 "standard_deduction": draft["standard_deduction"],
                 "professional_tax": draft["professional_tax"],
                 "tds": draft["tds"]
@@ -458,6 +578,40 @@ async def get_draft(draft_id: str, request: Request):
     except Exception as e:
         logger.error(f"Failed to retrieve draft {draft_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve draft")
+
+@router.delete("/draft/{draft_id}")
+async def delete_draft(draft_id: str, request: Request):
+    """
+    Delete a specific draft by ID (only if it belongs to the current user)
+    """
+    try:
+        # Extract user_id from headers
+        user_id = request.headers.get('X-User-ID')
+        if not user_id:
+            logger.warning("No user_id provided in headers for draft deletion request")
+            raise HTTPException(status_code=401, detail="User identification required")
+        
+        # Delete the draft
+        query = """
+        DELETE FROM "UserFinancials"
+        WHERE session_id = $1 AND is_draft = TRUE AND status = 'draft'
+        AND user_id = $2
+        """
+        
+        result = await db_manager.execute_query(query, draft_id, user_id)
+        
+        logger.info(f"Draft {draft_id} deleted for user {user_id}")
+        
+        return {
+            "success": True,
+            "message": "Draft deleted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete draft {draft_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete draft")
 
 async def save_financial_data_draft(session_id: str, financial_data: dict, user_id: str = None):
     """

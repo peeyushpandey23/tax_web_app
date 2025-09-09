@@ -36,27 +36,30 @@ class PDFProcessor:
             'form 16', 'form16', 'annual', 'tax deduction', 'tds', 'income tax'
         ]
     
-    async def process_pdf(self, pdf_file_path: str, document_type: str = None) -> Dict:
+    async def process_pdf(self, pdf_file_path: str, document_type: str = None, password: str = None) -> Dict:
         """
         Process PDF file and extract financial data
         
         Args:
             pdf_file_path: Path to the PDF file
             document_type: Type of document ('salary_slip', 'form16', or None for auto-detect)
+            password: Password for password-protected PDFs
         
         Returns:
             Dictionary containing extracted financial data
         """
         try:
             logger.info(f"Processing PDF: {pdf_file_path}")
+            if password:
+                logger.info("Processing password-protected PDF")
             
             # Auto-detect document type if not specified
             if not document_type:
-                document_type = await self._detect_document_type(pdf_file_path)
+                document_type = await self._detect_document_type(pdf_file_path, password)
                 logger.info(f"Detected document type: {document_type}")
             
             # Extract text using multiple methods
-            extracted_text = await self._extract_text(pdf_file_path)
+            extracted_text = await self._extract_text(pdf_file_path, password)
             logger.info(f"Text extraction completed. Length: {len(extracted_text)} characters")
             
             # Debug: Log first part of extracted text
@@ -104,11 +107,11 @@ class PDFProcessor:
                 }
             }
     
-    async def _detect_document_type(self, pdf_file_path: str) -> str:
+    async def _detect_document_type(self, pdf_file_path: str, password: str = None) -> str:
         """Auto-detect document type based on content"""
         try:
             # Extract text for analysis
-            text = await self._extract_text(pdf_file_path)
+            text = await self._extract_text(pdf_file_path, password)
             text_lower = text.lower()
             
             # Check for salary slip patterns
@@ -130,7 +133,7 @@ class PDFProcessor:
             logger.warning(f"Document type detection failed: {e}")
             return 'salary_slip'  # Default fallback
     
-    async def _extract_text(self, pdf_file_path: str) -> str:
+    async def _extract_text(self, pdf_file_path: str, password: str = None) -> str:
         """Extract text from PDF using multiple methods"""
         try:
             extracted_text = ""
@@ -139,6 +142,20 @@ class PDFProcessor:
             try:
                 with open(pdf_file_path, 'rb') as file:
                     pdf_reader = PyPDF2.PdfReader(file)
+                    
+                    # Check if PDF is encrypted
+                    if pdf_reader.is_encrypted:
+                        if password:
+                            try:
+                                pdf_reader.decrypt(password)
+                                logger.info("Successfully decrypted password-protected PDF")
+                            except Exception as e:
+                                logger.error(f"Failed to decrypt PDF with provided password: {e}")
+                                raise ValueError("Invalid password for PDF")
+                        else:
+                            logger.error("PDF is password-protected but no password provided")
+                            raise ValueError("PDF is password-protected. Please provide the password.")
+                    
                     for page in pdf_reader.pages:
                         text = page.extract_text()
                         if text:
@@ -148,6 +165,7 @@ class PDFProcessor:
                 
             except Exception as e:
                 logger.warning(f"PyPDF2 extraction failed: {e}")
+                raise e
             
             # Method 2: OCR if PyPDF2 didn't extract enough text
             if len(extracted_text.strip()) < 100:  # Threshold for insufficient text

@@ -49,9 +49,16 @@ class TaxResults {
             
             this.taxResults = await response.json();
             
+            console.log('Tax calculation response:', this.taxResults);
+            
             // Hide loading and show results
             this.hideLoading();
-            this.displayResults();
+            
+            if (this.taxResults.calculation_details) {
+                this.displayResults(this.taxResults.calculation_details);
+            } else {
+                throw new Error('Invalid response format: missing calculation_details');
+            }
             
         } catch (error) {
             console.error('Tax calculation failed:', error);
@@ -100,19 +107,25 @@ class TaxResults {
     }
     
     updateSummarySection(details) {
-        // Gross Income
-        document.getElementById('grossIncome').textContent = 
-            `₹${details.old_regime.gross_income.toLocaleString('en-IN')}`;
-        
-        // Best Regime
-        const bestRegime = details.comparison.best_regime;
-        document.getElementById('bestRegime').textContent = 
-            bestRegime === 'old' ? 'Old Regime' : 'New Regime';
-        
-        // Tax Savings
-        const savings = details.comparison.tax_savings;
-        document.getElementById('taxSavings').textContent = 
-            `₹${savings.toLocaleString('en-IN')}`;
+        try {
+            // Gross Income
+            const grossIncome = details.old_regime?.gross_total_income || 0;
+            document.getElementById('grossIncome').textContent = 
+                `₹${grossIncome.toLocaleString('en-IN')}`;
+            
+            // Best Regime
+            const bestRegime = details.comparison?.best_regime || 'old';
+            document.getElementById('bestRegime').textContent = 
+                bestRegime === 'old' ? 'Old Regime' : 'New Regime';
+            
+            // Tax Savings
+            const savings = details.comparison?.tax_savings || 0;
+            document.getElementById('taxSavings').textContent = 
+                `₹${savings.toLocaleString('en-IN')}`;
+        } catch (error) {
+            console.error('Error updating summary section:', error);
+            console.log('Details object:', details);
+        }
     }
     
     updateRegimeComparison(details) {
@@ -124,33 +137,47 @@ class TaxResults {
     }
     
     updateRegimeCard(regime, data) {
-        const prefix = regime === 'old' ? 'old' : 'new';
-        
-        // Tax amount
-        document.getElementById(`${prefix}RegimeTax`).textContent = 
-            data.total_tax.toLocaleString('en-IN');
-        
-        // Taxable income
-        document.getElementById(`${prefix}TaxableIncome`).textContent = 
-            `₹${data.taxable_income.toLocaleString('en-IN')}`;
-        
-        // Total deductions
-        document.getElementById(`${prefix}TotalDeductions`).textContent = 
-            `₹${data.deductions.total_deductions.toLocaleString('en-IN')}`;
-        
-        // Tax amount (before cess)
-        document.getElementById(`${prefix}TaxAmount`).textContent = 
-            `₹${data.tax_amount.toLocaleString('en-IN')}`;
-        
-        // Cess amount
-        document.getElementById(`${prefix}CessAmount`).textContent = 
-            `₹${data.cess_amount.toLocaleString('en-IN')}`;
-        
-        // Deductions breakdown
-        this.updateDeductionList(`${prefix}DeductionList`, data.deductions);
-        
-        // Slab breakdown
-        this.updateSlabList(`${prefix}SlabList`, data.slab_breakdown);
+        try {
+            const prefix = regime === 'old' ? 'old' : 'new';
+            
+            // Tax amount
+            const totalTax = data?.total_tax || 0;
+            document.getElementById(`${prefix}RegimeTax`).textContent = 
+                totalTax.toLocaleString('en-IN');
+            
+            // Taxable income
+            const taxableIncome = data?.taxable_income || 0;
+            document.getElementById(`${prefix}TaxableIncome`).textContent = 
+                `₹${taxableIncome.toLocaleString('en-IN')}`;
+            
+            // Total deductions
+            const totalDeductions = data?.deductions?.total_deductions || 0;
+            document.getElementById(`${prefix}TotalDeductions`).textContent = 
+                `₹${totalDeductions.toLocaleString('en-IN')}`;
+            
+            // Tax amount (before cess)
+            const taxAmount = data?.tax_amount || 0;
+            document.getElementById(`${prefix}TaxAmount`).textContent = 
+                `₹${taxAmount.toLocaleString('en-IN')}`;
+            
+            // Cess amount
+            const cessAmount = data?.cess_amount || 0;
+            document.getElementById(`${prefix}CessAmount`).textContent = 
+                `₹${cessAmount.toLocaleString('en-IN')}`;
+            
+            // Deductions breakdown
+            if (data?.deductions) {
+                this.updateDeductionList(`${prefix}DeductionList`, data.deductions);
+            }
+            
+            // Slab breakdown
+            if (data?.slab_breakdown) {
+                this.updateSlabList(`${prefix}SlabList`, data.slab_breakdown);
+            }
+        } catch (error) {
+            console.error(`Error updating ${regime} regime card:`, error);
+            console.log('Data object:', data);
+        }
     }
     
     updateDeductionList(listId, deductions) {
@@ -395,8 +422,15 @@ function proceedToAIAdvisor() {
         sessionStorage.setItem('selected_regime', taxResults.selectedRegime);
     }
     
-    // Navigate to AI Advisor (Phase 4)
-    window.location.href = '/ai-advisor';
+    // Get session ID
+    const sessionId = sessionStorage.getItem('session_id');
+    
+    // Navigate to AI Advisor with session ID
+    if (sessionId) {
+        window.location.href = `/ai-advisor?session_id=${sessionId}`;
+    } else {
+        window.location.href = '/ai-advisor';
+    }
 }
 
 function retryCalculation() {

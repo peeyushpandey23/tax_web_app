@@ -20,6 +20,7 @@ python-multipart
 
 # PDF processing (for Phase 2)
 PyPDF2
+pycryptodome
 pytesseract
 pdf2image
 Pillow

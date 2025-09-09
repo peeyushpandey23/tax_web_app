@@ -92,12 +92,22 @@ class FinancialDataReview {
         
         // Populate form fields with extracted data
         const fieldMappings = {
+            'financial_year': 'financialYear',
+            'age': 'age',
             'gross_salary': 'grossSalary',
             'basic_salary': 'basicSalary',
             'hra_received': 'hraReceived',
             'rent_paid': 'rentPaid',
+            'lta_received': 'ltaReceived',
+            'other_exemptions': 'otherExemptions',
             'deduction_80c': 'deduction80c',
             'deduction_80d': 'deduction80d',
+            'deduction_80dd': 'deduction80dd',
+            'deduction_80e': 'deduction80e',
+            'deduction_80tta': 'deduction80tta',
+            'home_loan_interest': 'homeLoanInterest',
+            'other_deductions': 'otherDeductions',
+            'other_income': 'otherIncome',
             'standard_deduction': 'standardDeduction',
             'professional_tax': 'professionalTax',
             'tds': 'tds'
@@ -106,7 +116,12 @@ class FinancialDataReview {
         Object.entries(fieldMappings).forEach(([key, fieldId]) => {
             const field = document.getElementById(fieldId);
             if (field && this.extractedData[key] !== undefined) {
-                field.value = this.extractedData[key];
+                // Special handling for optional fields that might be 0
+                if ((key === 'other_deductions' || key === 'other_income') && this.extractedData[key] === 0) {
+                    field.value = ''; // Leave empty for 0 values
+                } else {
+                    field.value = this.extractedData[key];
+                }
                 this.validateField(field);
             }
         });
@@ -182,6 +197,21 @@ class FinancialDataReview {
         
         // Field-specific validation
         switch (fieldName) {
+            case 'age':
+                if (value < 18 || value > 100) {
+                    isValid = false;
+                    errorMessage = 'Age must be between 18 and 100 years';
+                }
+                break;
+                
+            case 'financial_year':
+                const fyPattern = /^\d{4}-\d{2}$/;
+                if (!fyPattern.test(field.value)) {
+                    isValid = false;
+                    errorMessage = 'Financial year must be in format YYYY-YY';
+                }
+                break;
+                
             case 'gross_salary':
                 if (value < 300000) {
                     isValid = false;
@@ -208,6 +238,34 @@ class FinancialDataReview {
                 if (value > 25000) {
                     isValid = false;
                     errorMessage = '80D deduction cannot exceed ₹25,000';
+                }
+                break;
+                
+            case 'deduction_80dd':
+                if (value > 125000) {
+                    isValid = false;
+                    errorMessage = '80DD deduction cannot exceed ₹1,25,000';
+                }
+                break;
+                
+            case 'deduction_80e':
+                if (value > 40000) {
+                    isValid = false;
+                    errorMessage = '80E deduction cannot exceed ₹40,000';
+                }
+                break;
+                
+            case 'deduction_80tta':
+                if (value > 10000) {
+                    isValid = false;
+                    errorMessage = '80TTA deduction cannot exceed ₹10,000';
+                }
+                break;
+                
+            case 'home_loan_interest':
+                if (value > 200000) {
+                    isValid = false;
+                    errorMessage = 'Home loan interest cannot exceed ₹2,00,000';
                 }
                 break;
                 
@@ -282,7 +340,7 @@ class FinancialDataReview {
     }
     
     updateFormValidation() {
-        const requiredFields = ['gross_salary', 'basic_salary'];
+        const requiredFields = ['financial_year', 'age', 'gross_salary', 'basic_salary'];
         const submitButton = document.querySelector('button[type="submit"]');
         
         let isValid = true;
@@ -433,9 +491,44 @@ class FinancialDataReview {
         const formData = new FormData(form);
         
         const data = {};
-        for (const [key, value] of formData.entries()) {
-            data[key] = parseFloat(value) || 0;
-        }
+        
+        // Collect all form fields explicitly
+        const fieldNames = [
+            'financial_year', 'age', 'gross_salary', 'basic_salary',
+            'hra_received', 'rent_paid', 'lta_received', 'other_exemptions',
+            'deduction_80c', 'deduction_80d', 'deduction_80dd', 'deduction_80e',
+            'deduction_80tta', 'home_loan_interest', 'other_deductions',
+            'other_income', 'standard_deduction', 'professional_tax', 'tds'
+        ];
+        
+        // Get values from form fields
+        fieldNames.forEach(fieldName => {
+            const field = form.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+                if (fieldName === 'financial_year') {
+                    data[fieldName] = field.value;
+                } else if (fieldName === 'age') {
+                    data[fieldName] = parseInt(field.value) || null;
+                } else {
+                    // For optional fields, use null if empty, otherwise parse as float
+                    if (fieldName === 'other_deductions' || fieldName === 'other_income') {
+                        data[fieldName] = field.value.trim() === '' ? null : parseFloat(field.value) || 0;
+                    } else {
+                        data[fieldName] = parseFloat(field.value) || 0;
+                    }
+                }
+            } else {
+                console.warn(`Field ${fieldName} not found in form`);
+                // Set default values for missing fields
+                if (fieldName === 'financial_year') {
+                    data[fieldName] = '2024-25';
+                } else if (fieldName === 'age') {
+                    data[fieldName] = null;
+                } else {
+                    data[fieldName] = 0;
+                }
+            }
+        });
         
         // Add session and status information
         console.log('Session ID in getFormData:', this.sessionId);
@@ -448,6 +541,7 @@ class FinancialDataReview {
         data.status = 'completed';
         data.is_draft = false;
         
+        console.log('Form data being submitted:', data);
         return data;
     }
     

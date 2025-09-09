@@ -13,6 +13,7 @@ from app.database import db_manager
 from app.models import HealthCheck, ErrorResponse
 from app.routes.upload import router as upload_router
 from app.routes.tax_calculation import router as tax_calculation_router
+from app.routes.ai_advisor import router as ai_advisor_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -129,6 +130,7 @@ async def internal_error_handler(request: Request, exc: HTTPException):
 # Include API routes
 app.include_router(upload_router)
 app.include_router(tax_calculation_router)
+app.include_router(ai_advisor_router)
 
 # Root endpoint
 @app.get("/api/")

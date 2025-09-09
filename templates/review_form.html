@@ -71,6 +71,27 @@
                 <p class="form-description">Please review and edit the extracted financial data. All amounts should be annual figures.</p>
                 
                 <form id="financialForm" class="financial-form">
+                    <!-- Personal Information -->
+                    <div class="form-group">
+                        <h3 class="group-title">Personal Information</h3>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="financialYear">Financial Year</label>
+                                <select id="financialYear" name="financial_year" required>
+                                    <option value="2024-25" selected>2024-25</option>
+                                    <option value="2025-26">2025-26</option>
+                                </select>
+                                <small class="field-help">Select the financial year for tax calculation</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="age">Age (as on March 31st)</label>
+                                <input type="number" id="age" name="age" min="18" max="100" required>
+                                <small class="field-help">Your age as on March 31st of the financial year</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Salary Information -->
                     <div class="form-group">
                         <h3 class="group-title">Salary Information</h3>
@@ -95,9 +116,9 @@
                         </div>
                     </div>
 
-                    <!-- HRA Information -->
+                    <!-- Allowances and Exemptions -->
                     <div class="form-group">
-                        <h3 class="group-title">HRA (House Rent Allowance)</h3>
+                        <h3 class="group-title">Allowances & Exemptions</h3>
                         <div class="form-row">
                             <div class="form-field">
                                 <label for="hraReceived">HRA Received (Annual)</label>
@@ -117,9 +138,29 @@
                                 <small class="field-help">Total rent paid during the year</small>
                             </div>
                         </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="ltaReceived">LTA Received (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="ltaReceived" name="lta_received" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">Leave Travel Allowance received</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="otherExemptions">Other Exemptions (Section 10)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="otherExemptions" name="other_exemptions" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">Food coupons, transport allowance, etc.</small>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Deductions -->
+                    <!-- Tax Deductions -->
                     <div class="form-group">
                         <h3 class="group-title">Tax Deductions</h3>
                         <div class="form-row">
@@ -139,6 +180,66 @@
                                     <input type="number" id="deduction80d" name="deduction_80d" step="0.01" min="0" max="25000" value="0">
                                 </div>
                                 <small class="field-help">Health insurance premiums (max ₹25,000)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="deduction80dd">80DD Disability Care (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="deduction80dd" name="deduction_80dd" step="0.01" min="0" max="125000" value="0">
+                                </div>
+                                <small class="field-help">Medical treatment of disabled dependent (max ₹1,25,000)</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="deduction80e">80E Education Loan Interest (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="deduction80e" name="deduction_80e" step="0.01" min="0" max="40000" value="0">
+                                </div>
+                                <small class="field-help">Interest on education loan (max ₹40,000)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="deduction80tta">80TTA Savings Interest (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="deduction80tta" name="deduction_80tta" step="0.01" min="0" max="10000" value="0">
+                                </div>
+                                <small class="field-help">Interest from savings account (max ₹10,000)</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="homeLoanInterest">Home Loan Interest (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="homeLoanInterest" name="home_loan_interest" step="0.01" min="0" max="200000" value="0">
+                                </div>
+                                <small class="field-help">Interest on home loan - Section 24(b) (max ₹2,00,000)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="otherDeductions">Other Deductions (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="otherDeductions" name="other_deductions" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">80G donations, 80U disability, etc.</small>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label for="otherIncome">Other Income (Annual)</label>
+                                <div class="input-group">
+                                    <span class="currency-symbol">₹</span>
+                                    <input type="number" id="otherIncome" name="other_income" step="0.01" min="0" value="0">
+                                </div>
+                                <small class="field-help">Interest income, capital gains, etc.</small>
                             </div>
                         </div>
                         

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Financial Advisor - Tax Advisor Application</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="../static/css/ai_advisor.css">
+    <link href="https://fonts.googleapis.com/css2?family=Aptos+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">AI Financial Advisor</h1>
+                <p class="app-subtitle">Personalized tax optimization and investment advice</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Financial Summary Card -->
+            <div class="financial-summary" id="financialSummary" style="display: none;">
+                <h3>Your Financial Overview</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">Gross Salary:</span>
+                        <span class="value" id="grossSalary">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Tax Savings:</span>
+                        <span class="value savings" id="taxSavings">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Best Regime:</span>
+                        <span class="value" id="bestRegime">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversation Area -->
+            <div class="conversation-container">
+                <!-- AI Question Display -->
+                <div class="ai-question-card" id="aiQuestionCard" style="display: none;">
+                    <div class="ai-avatar">🤖</div>
+                    <div class="question-content">
+                        <div class="question-text" id="questionText">-</div>
+                        <div class="question-meta">
+                            <span class="round-indicator" id="roundIndicator">Question 1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Response Input -->
+                <div class="response-input-container" id="responseInputContainer" style="display: none;">
+                    <div class="input-wrapper">
+                        <textarea 
+                            id="userResponse" 
+                            placeholder="Type your response here..."
+                            maxlength="1000"
+                            rows="3"
+                        ></textarea>
+                        <div class="input-footer">
+                            <span class="char-count" id="charCount">0/1000</span>
+                            <button class="btn-primary" id="submitResponse" disabled>
+                                <span class="btn-text">Send Response</span>
+                                <span class="btn-loading" style="display: none;">Sending...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Screen -->
+                <div class="processing-screen" id="processingScreen" style="display: none;">
+                    <div class="processing-content">
+                        <div class="processing-spinner"></div>
+                        <h3>Generating your personalized recommendations...</h3>
+                        <p>This may take a few moments</p>
+                    </div>
+                </div>
+
+                <!-- Recommendations Display -->
+                <div class="recommendations-container" id="recommendationsContainer" style="display: none;">
+                    <div class="recommendations-header">
+                        <h2>Your Personalized Recommendations</h2>
+                        <p class="recommendations-subtitle">Based on our conversation and your financial profile</p>
+                    </div>
+                    
+                    <div class="conversation-summary" id="conversationSummary" style="display: none;">
+                        <h4>Conversation Summary</h4>
+                        <div class="summary-text" id="summaryText">-</div>
+                    </div>
+
+                    <div class="recommendations-list" id="recommendationsList">
+                        <!-- Recommendations will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Error Display -->
+                <div class="error-container" id="errorContainer" style="display: none;">
+                    <div class="error-content">
+                        <div class="error-icon">⚠️</div>
+                        <h3>Service Temporarily Unavailable</h3>
+                        <p id="errorMessage">AI Advisor service is temporarily unavailable. Please try again later or contact support if the issue persists.</p>
+                        <button class="btn-secondary" onclick="location.reload()">Try Again</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" id="actionButtons" style="display: none;">
+                <button class="btn-secondary" onclick="window.location.href='/tax-results'">
+                    ← Back to Tax Results
+                </button>
+                <button class="btn-primary" onclick="window.location.href='/'">
+                    Start New Session
+                </button>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Tax Advisor Application. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="../static/js/ai_advisor.js?v=3.0"></script>
+</body>
+</html>

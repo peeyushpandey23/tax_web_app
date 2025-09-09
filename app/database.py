@@ -236,12 +236,22 @@ class DatabaseManager:
             CREATE TABLE IF NOT EXISTS "UserFinancials" (
                 session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id VARCHAR(36),
+                financial_year VARCHAR(7) DEFAULT '2024-25',
+                age INTEGER,
                 gross_salary NUMERIC(15, 2) NOT NULL,
                 basic_salary NUMERIC(15, 2) NOT NULL,
                 hra_received NUMERIC(15, 2) DEFAULT 0,
                 rent_paid NUMERIC(15, 2) DEFAULT 0,
+                lta_received NUMERIC(15, 2) DEFAULT 0,
+                other_exemptions NUMERIC(15, 2) DEFAULT 0,
                 deduction_80c NUMERIC(15, 2) DEFAULT 0,
                 deduction_80d NUMERIC(15, 2) DEFAULT 0,
+                deduction_80dd NUMERIC(15, 2) DEFAULT 0,
+                deduction_80e NUMERIC(15, 2) DEFAULT 0,
+                deduction_80tta NUMERIC(15, 2) DEFAULT 0,
+                home_loan_interest NUMERIC(15, 2) DEFAULT 0,
+                other_deductions NUMERIC(15, 2) DEFAULT 0,
+                other_income NUMERIC(15, 2) DEFAULT 0,
                 standard_deduction NUMERIC(15, 2) DEFAULT 50000,
                 professional_tax NUMERIC(15, 2) DEFAULT 0,
                 tds NUMERIC(15, 2) DEFAULT 0,
@@ -266,6 +276,35 @@ class DatabaseManager:
             );
             """
             
+            # Create AIAdvisorConversation table
+            ai_conversation_table = """
+            CREATE TABLE IF NOT EXISTS "AIAdvisorConversation" (
+                conversation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                session_id UUID NOT NULL REFERENCES "UserFinancials"(session_id) ON DELETE CASCADE,
+                conversation_round INTEGER NOT NULL DEFAULT 1,
+                gemini_question TEXT NOT NULL,
+                user_response TEXT NOT NULL,
+                conversation_context JSONB,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+            """
+            
+            # Create AIAdvisorRecommendations table
+            ai_recommendations_table = """
+            CREATE TABLE IF NOT EXISTS "AIAdvisorRecommendations" (
+                recommendation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                session_id UUID NOT NULL REFERENCES "UserFinancials"(session_id) ON DELETE CASCADE,
+                conversation_id UUID NOT NULL REFERENCES "AIAdvisorConversation"(conversation_id) ON DELETE CASCADE,
+                recommendation_type VARCHAR(50) NOT NULL,
+                recommendation_title TEXT NOT NULL,
+                recommendation_description TEXT NOT NULL,
+                action_items JSONB,
+                priority_level VARCHAR(20) DEFAULT 'medium',
+                estimated_savings NUMERIC(15, 2),
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            );
+            """
+            
             # Create indexes
             indexes = """
             CREATE INDEX IF NOT EXISTS idx_userfinancials_created_at ON "UserFinancials"(created_at);
@@ -274,6 +313,10 @@ class DatabaseManager:
             CREATE INDEX IF NOT EXISTS idx_taxcomparison_session ON "TaxComparison"(session_id);
             CREATE INDEX IF NOT EXISTS idx_taxcomparison_best_regime ON "TaxComparison"(best_regime);
             CREATE INDEX IF NOT EXISTS idx_taxcomparison_created_at ON "TaxComparison"(created_at);
+            CREATE INDEX IF NOT EXISTS idx_aiadvisor_session ON "AIAdvisorConversation"(session_id);
+            CREATE INDEX IF NOT EXISTS idx_aiadvisor_conversation_round ON "AIAdvisorConversation"(conversation_round);
+            CREATE INDEX IF NOT EXISTS idx_recommendations_session ON "AIAdvisorRecommendations"(session_id);
+            CREATE INDEX IF NOT EXISTS idx_recommendations_type ON "AIAdvisorRecommendations"(recommendation_type);
             """
             
             # Create constraint (using DO block to handle IF NOT EXISTS)
@@ -294,13 +337,18 @@ class DatabaseManager:
             async with self.get_connection() as conn:
                 await conn.execute(user_financials_table)
                 await conn.execute(tax_comparison_table)
+                await conn.execute(ai_conversation_table)
+                await conn.execute(ai_recommendations_table)
                 await conn.execute(indexes)
                 await conn.execute(constraint)
             
             # Add user_id column if it doesn't exist (for existing databases)
             await self._migrate_add_user_id_column()
             
-            logger.info("UserFinancials and TaxComparison tables created successfully")
+            # Add new tax calculation fields if they don't exist (for existing databases)
+            await self._migrate_add_tax_fields()
+            
+            logger.info("UserFinancials, TaxComparison, and AI Advisor tables created successfully")
             
         except Exception as e:
             logger.error(f"Failed to create tables: {e}")
@@ -329,6 +377,112 @@ class DatabaseManager:
                 
         except Exception as e:
             logger.error(f"Migration failed: {e}")
+            # Don't raise exception as this is not critical for app startup
+    
+    async def _migrate_add_tax_fields(self) -> None:
+        """Add new tax calculation fields to existing UserFinancials table if they don't exist"""
+        try:
+            migration_query = """
+            DO $$
+            BEGIN
+                -- Add financial_year column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'financial_year'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN financial_year VARCHAR(7) DEFAULT '2024-25';
+                END IF;
+                
+                -- Add age column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'age'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN age INTEGER;
+                END IF;
+                
+                -- Add lta_received column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'lta_received'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN lta_received NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add other_exemptions column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'other_exemptions'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN other_exemptions NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add deduction_80dd column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'deduction_80dd'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN deduction_80dd NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add deduction_80e column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'deduction_80e'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN deduction_80e NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add deduction_80tta column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'deduction_80tta'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN deduction_80tta NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add home_loan_interest column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'home_loan_interest'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN home_loan_interest NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add other_deductions column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'other_deductions'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN other_deductions NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+                
+                -- Add other_income column
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'UserFinancials' 
+                    AND column_name = 'other_income'
+                ) THEN
+                    ALTER TABLE "UserFinancials" ADD COLUMN other_income NUMERIC(15, 2) DEFAULT 0;
+                END IF;
+            END $$;
+            """
+            
+            async with self.get_connection() as conn:
+                await conn.execute(migration_query)
+                logger.info("Migration completed: new tax calculation fields added if needed")
+                
+        except Exception as e:
+            logger.error(f"Tax fields migration failed: {e}")
             # Don't raise exception as this is not critical for app startup
     
     # CRUD Methods for REST-style operations

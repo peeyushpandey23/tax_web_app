@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 
 from app.database import db_manager
-from app.models import TaxCalculationRequest, TaxCalculationResponse, RegimeSelection
+from app.models import TaxCalculationRequest, TaxCalculationResponse, RegimeSelectionRequest
 from app.services.tax_calculator import tax_calculator
 
 # Configure logging
@@ -105,7 +105,7 @@ async def get_tax_results(session_id: str):
         raise HTTPException(status_code=500, detail="Failed to retrieve tax results")
 
 @router.post("/select-regime")
-async def select_regime(selection: RegimeSelection):
+async def select_regime(selection: RegimeSelectionRequest):
     """
     Update user's regime selection
     """
@@ -188,9 +188,10 @@ async def get_financial_data(session_id: str) -> Optional[Dict]:
     """Helper function to retrieve financial data from database"""
     try:
         query = """
-        SELECT gross_salary, basic_salary, hra_received, rent_paid,
-               deduction_80c, deduction_80d, standard_deduction,
-               professional_tax, tds
+        SELECT financial_year, age, gross_salary, basic_salary, hra_received, rent_paid,
+               lta_received, other_exemptions, deduction_80c, deduction_80d, deduction_80dd,
+               deduction_80e, deduction_80tta, home_loan_interest, other_deductions,
+               other_income, standard_deduction, professional_tax, tds
         FROM "UserFinancials"
         WHERE session_id = $1 AND status = 'completed'
         """
@@ -199,12 +200,22 @@ async def get_financial_data(session_id: str) -> Optional[Dict]:
         
         if result:
             return {
+                'financial_year': result['financial_year'] or '2024-25',
+                'age': result['age'],
                 'gross_salary': float(result['gross_salary']),
                 'basic_salary': float(result['basic_salary']),
                 'hra_received': float(result['hra_received']),
                 'rent_paid': float(result['rent_paid']),
+                'lta_received': float(result['lta_received']),
+                'other_exemptions': float(result['other_exemptions']),
                 'deduction_80c': float(result['deduction_80c']),
                 'deduction_80d': float(result['deduction_80d']),
+                'deduction_80dd': float(result['deduction_80dd']),
+                'deduction_80e': float(result['deduction_80e']),
+                'deduction_80tta': float(result['deduction_80tta']),
+                'home_loan_interest': float(result['home_loan_interest']),
+                'other_deductions': float(result['other_deductions']),
+                'other_income': float(result['other_income']),
                 'standard_deduction': float(result['standard_deduction']),
                 'professional_tax': float(result['professional_tax']),
                 'tds': float(result['tds'])
